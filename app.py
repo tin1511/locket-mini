@@ -68,7 +68,7 @@ def register():
         u = request.form["username"]
         p = request.form["password"]
 
-        conn = sqlite3.connect("users.db")
+        sqlite3.connect("/tmp/users.db")
         c = conn.cursor()
         c.execute("INSERT INTO users(username,password) VALUES(?,?)",(u,p))
         conn.commit()
