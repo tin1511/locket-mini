@@ -1,114 +1,159 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Locket Mini</title>
 
+<link rel="manifest" href="/static/manifest.json">
+
 <style>
+*{margin:0;padding:0;box-sizing:border-box;}
+
 body{
     background:black;
+    font-family:sans-serif;
+    color:white;
+}
+
+.app{
+    max-width:420px;
+    margin:auto;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+}
+
+/* CAMERA VIEW */
+#camera{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+}
+
+#camera img, video{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+/* TOP */
+.header{
+    text-align:center;
+    padding:10px;
+    font-weight:bold;
+}
+
+/* BOTTOM */
+.controls{
     display:flex;
     justify-content:center;
     align-items:center;
-    height:100vh;
-    font-family:sans-serif;
+    gap:20px;
+    padding:20px;
 }
 
-.box{
-    width:260px;
-    background:#111;
-    padding:15px;
+/* NÚT CAMERA */
+.camera-btn{
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+}
+
+/* POST */
+.post-btn{
+    padding:10px 20px;
     border-radius:20px;
-    text-align:center;
-}
-
-#camera{
-    height:320px;
-    background:#222;
-    border-radius:15px;
-    margin-bottom:10px;
-    overflow:auto;
-}
-
-#camera img{
-    width:100%;
-    border-radius:10px;
-    margin-bottom:8px;
-}
-
-button{
-    padding:10px;
     border:none;
-    border-radius:20px;
-    margin:5px;
-    cursor:pointer;
-}
-
-.post{
     background:#007bff;
     color:white;
+    font-weight:bold;
 }
 </style>
 </head>
 
 <body>
 
-<div class="box">
-    <h3 style="color:white;">Locket Mini 📸</h3>
+<div class="app">
 
-    <div id="camera">Chưa có ảnh</div>
+    <div class="header">Locket Mini 📸</div>
 
-    <input type="file" id="file" hidden>
+    <div id="camera">Loading camera...</div>
 
-    <button onclick="pick()">📷</button>
-    <button class="post" onclick="upload()">POST</button>
+    <div class="controls">
+        <div class="camera-btn" onclick="capture()">📷</div>
+        <button class="post-btn" onclick="upload()">POST</button>
+    </div>
+
 </div>
 
 <script>
-let fileData = null;
+let video;
+let canvas = document.createElement("canvas");
+let capturedBlob = null;
 
-function pick(){
-    document.getElementById("file").click();
+// MỞ CAMERA
+async function startCamera(){
+    video = document.createElement("video");
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+        audio: false
+    });
+
+    video.srcObject = stream;
+    video.autoplay = true;
+
+    document.getElementById("camera").innerHTML = "";
+    document.getElementById("camera").appendChild(video);
 }
 
-document.getElementById("file").onchange = e => {
-    fileData = e.target.files[0];
+startCamera();
 
-    const reader = new FileReader();
-    reader.onload = () => {
+// CHỤP ẢNH
+function capture(){
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0);
+
+    canvas.toBlob(blob => {
+        capturedBlob = blob;
+
+        const url = URL.createObjectURL(blob);
         document.getElementById("camera").innerHTML =
-            `<img src="${reader.result}">`;
-    }
-    reader.readAsDataURL(fileData);
-};
+            `<img src="${url}">`;
+    }, "image/jpeg");
+}
 
+// UPLOAD
 async function upload(){
-    if(!fileData) return alert("Chọn ảnh trước!");
+    if(!capturedBlob){
+        alert("Chụp ảnh trước!");
+        return;
+    }
 
     const formData = new FormData();
-    formData.append("photo", fileData);
+    formData.append("photo", capturedBlob, "photo.jpg");
 
     await fetch("/upload", {
         method:"POST",
         body:formData
     });
 
-    loadPhotos();
+    alert("Đã gửi 😎");
+
+    startCamera();
 }
-
-async function loadPhotos(){
-    const res = await fetch("/photos");
-    const data = await res.json();
-
-    const cam = document.getElementById("camera");
-    cam.innerHTML = "";
-
-    data.forEach(img=>{
-        cam.innerHTML += `<img src="${img}">`;
-    });
-}
-
-loadPhotos();
 </script>
 
 </body>
