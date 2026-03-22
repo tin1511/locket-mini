@@ -1,23 +1,99 @@
-<h2>Xin chào {{user}}</h2>
-<a href="/logout">Logout</a>
+<!DOCTYPE html>
+<html>
+<head>
+<title>Mini Facebook</title>
 
+<style>
+body{
+    background:#f0f2f5;
+    font-family:sans-serif;
+}
+
+/* HEADER */
+.header{
+    background:white;
+    padding:10px;
+    font-size:20px;
+    font-weight:bold;
+    text-align:center;
+    box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* POST BOX */
+.post-box{
+    background:white;
+    margin:20px auto;
+    padding:15px;
+    width:400px;
+    border-radius:10px;
+}
+
+.post-box input, .post-box button{
+    width:100%;
+    margin-top:10px;
+}
+
+/* FEED */
+.post{
+    background:white;
+    width:400px;
+    margin:20px auto;
+    padding:10px;
+    border-radius:10px;
+}
+
+.post img{
+    width:100%;
+    border-radius:10px;
+}
+
+.actions{
+    margin-top:10px;
+}
+
+.comment{
+    font-size:14px;
+    margin-top:5px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">Mini Facebook 😎</div>
+
+<div class="post-box">
 <form method="POST" action="/post" enctype="multipart/form-data">
 <input type="file" name="photo">
-<input name="caption" placeholder="Viết gì đó...">
-<button>Post</button>
+<input name="caption" placeholder="Bạn đang nghĩ gì?">
+<button>Đăng</button>
 </form>
-
-<hr>
+</div>
 
 {% for p in posts %}
-<div>
-    <h3>{{p[1]}}</h3>
-    <img src="/{{p[2]}}" width="300">
+<div class="post">
+    <b>{{p[1]}}</b>
     <p>{{p[3]}}</p>
+    <img src="/{{p[2]}}">
 
-    {% if p[1] == user %}
-    <a href="/delete/{{p[0]}}">❌ Xoá</a>
-    {% endif %}
+    <div class="actions">
+        <a href="/like/{{p[0]}}">👍 Like</a>
+    </div>
+
+    <!-- COMMENT -->
+    <form method="POST" action="/comment/{{p[0]}}">
+        <input name="content" placeholder="Viết bình luận...">
+    </form>
+
+    <!-- HIỆN COMMENT -->
+    {% for c in comments if c[1] == p[0] %}
+        <div class="comment">
+            <b>{{c[2]}}:</b> {{c[3]}}
+        </div>
+    {% endfor %}
+
 </div>
-<hr>
 {% endfor %}
+
+</body>
+</html>
