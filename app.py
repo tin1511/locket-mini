@@ -1,0 +1,40 @@
+from flask import Flask, render_template, request, jsonify
+import os
+from datetime import datetime
+
+app = Flask(__name__)
+
+UPLOAD_FOLDER = "static"
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+# đảm bảo folder tồn tại
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+# lưu danh sách ảnh (RAM)
+photos = []
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+@app.route("/upload", methods=["POST"])
+def upload():
+    file = request.files["photo"]
+
+    filename = datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg"
+    path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+
+    file.save(path)
+
+    url = "/" + path
+    photos.insert(0, url)
+
+    return jsonify({"url": url})
+
+@app.route("/photos")
+def get_photos():
+    return jsonify(photos)
+
+if __name__ == "__main__":
+    app.run()
