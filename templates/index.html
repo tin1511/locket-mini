@@ -12,11 +12,10 @@
 
 body{
     background:black;
-    font-family:sans-serif;
     color:white;
+    font-family:sans-serif;
 }
 
-/* APP */
 .app{
     max-width:420px;
     margin:auto;
@@ -25,14 +24,13 @@ body{
     flex-direction:column;
 }
 
-/* HEADER */
 .header{
     text-align:center;
     padding:10px;
     font-weight:bold;
 }
 
-/* FEED (VUỐT) */
+/* FEED */
 #feed{
     flex:1;
     overflow-y:scroll;
@@ -50,7 +48,7 @@ body{
     object-fit:cover;
 }
 
-/* CONTROLS */
+/* BUTTONS */
 .controls{
     position:fixed;
     bottom:20px;
@@ -60,7 +58,6 @@ body{
     gap:20px;
 }
 
-/* NÚT CAMERA */
 .camera-btn{
     width:70px;
     height:70px;
@@ -72,14 +69,12 @@ body{
     font-size:24px;
 }
 
-/* POST */
 .post-btn{
     padding:10px 20px;
     border-radius:20px;
     border:none;
     background:#007bff;
     color:white;
-    font-weight:bold;
 }
 </style>
 </head>
@@ -98,17 +93,22 @@ body{
 </div>
 
 <script>
-let video;
+let video = null;
 let canvas = document.createElement("canvas");
 let capturedBlob = null;
 
-// LOAD FEED
+/* LOAD FEED */
 async function loadFeed(){
     const res = await fetch("/photos");
     const data = await res.json();
 
     const feed = document.getElementById("feed");
     feed.innerHTML = "";
+
+    if(data.length === 0){
+        feed.innerHTML = "<p style='text-align:center;margin-top:50px'>Chưa có ảnh 😢</p>";
+        return;
+    }
 
     data.forEach(img=>{
         feed.innerHTML += `
@@ -119,7 +119,7 @@ async function loadFeed(){
     });
 }
 
-// MỞ CAMERA
+/* CAMERA */
 async function startCamera(){
     video = document.createElement("video");
 
@@ -130,11 +130,12 @@ async function startCamera(){
     video.srcObject = stream;
     video.autoplay = true;
 
-    document.getElementById("feed").innerHTML = "";
-    document.getElementById("feed").appendChild(video);
+    const feed = document.getElementById("feed");
+    feed.innerHTML = "";
+    feed.appendChild(video);
 }
 
-// CHỤP ẢNH
+/* CAPTURE */
 function capture(){
     if(!video){
         startCamera();
@@ -151,12 +152,15 @@ function capture(){
         capturedBlob = blob;
 
         const url = URL.createObjectURL(blob);
+
         document.getElementById("feed").innerHTML =
             `<div class="photo"><img src="${url}"></div>`;
+
+        video = null; // 🔥 FIX
     }, "image/jpeg");
 }
 
-// UPLOAD
+/* UPLOAD */
 async function upload(){
     if(!capturedBlob){
         alert("Chụp ảnh trước!");
@@ -171,13 +175,12 @@ async function upload(){
         body:formData
     });
 
-    alert("Đã đăng 😎");
-
     capturedBlob = null;
-    loadFeed();
+
+    await loadFeed(); // 🔥 FIX QUAN TRỌNG
 }
 
-// LOAD LẦN ĐẦU
+/* LOAD LẦN ĐẦU */
 loadFeed();
 </script>
 
