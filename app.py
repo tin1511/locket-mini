@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, jsonify
+from flask import Flask, render_template, request, redirect, session
 import sqlite3
 import os
 from datetime import datetime
@@ -9,19 +9,10 @@ app.secret_key = "secret123"
 UPLOAD_FOLDER = "static"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-# DB
+# INIT DB
 def init_db():
     conn = sqlite3.connect("/tmp/users.db")
     c = conn.cursor()
-
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS posts(
-       id INTEGER PRIMARY KEY AUTOINCREMENT,
-       username TEXT,
-       image TEXT,
-       caption TEXT
-    )
-    """)
 
     c.execute("""
     CREATE TABLE IF NOT EXISTS users(
@@ -30,17 +21,26 @@ def init_db():
         password TEXT
     )
     """)
-    
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS posts(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
+        image TEXT,
+        caption TEXT
+    )
+    """)
+
     c.execute("""
     CREATE TABLE IF NOT EXISTS likes(
-        id INTEGER PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         post_id INTEGER
     )
-   """)
+    """)
 
     c.execute("""
     CREATE TABLE IF NOT EXISTS comments(
-        id INTEGER PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         post_id INTEGER,
         username TEXT,
         content TEXT
@@ -52,32 +52,6 @@ def init_db():
 
 init_db()
 
-@app.route("/like/<int:post_id>")
-def like(post_id):
-    conn = sqlite3.connect("/tmp/users.db")
-    c = conn.cursor()
-
-    c.execute("INSERT INTO likes(post_id) VALUES(?)", (post_id,))
-    conn.commit()
-    conn.close()
-
-    return redirect("/home")
-
-@app.route("/comment/<int:post_id>", methods=["POST"])
-def comment(post_id):
-    content = request.form["content"]
-
-    conn = sqlite3.connect("/tmp/users.db")
-    c = conn.cursor()
-
-    c.execute("INSERT INTO comments(post_id,username,content) VALUES(?,?,?)",
-              (post_id, session["user"], content))
-
-    conn.commit()
-    conn.close()
-
-    return redirect("/home")
-
 # REGISTER
 @app.route("/register", methods=["GET","POST"])
 def register():
@@ -86,7 +60,7 @@ def register():
         p = request.form.get("password")
 
         conn = sqlite3.connect("/tmp/users.db")
-        c=conn.cursor()
+        c = conn.cursor()
         c.execute("INSERT INTO users(username,password) VALUES(?,?)",(u,p))
         conn.commit()
         conn.close()
@@ -128,11 +102,18 @@ def home():
     c.execute("SELECT * FROM comments")
     comments = c.fetchall()
 
+    c.execute("SELECT post_id, COUNT(*) FROM likes GROUP BY post_id")
+    likes_data = dict(c.fetchall())
+
     conn.close()
 
-    return render_template("home.html", posts=posts, comments=comments, user=session["user"])
+    return render_template("home.html",
+                           posts=posts,
+                           comments=comments,
+                           likes=likes_data,
+                           user=session["user"])
 
-# UPLOAD POST
+# POST
 @app.route("/post", methods=["POST"])
 def post():
     if "user" not in session:
@@ -159,6 +140,34 @@ def post():
 
     return redirect("/home")
 
+# LIKE
+@app.route("/like/<int:post_id>")
+def like(post_id):
+    conn = sqlite3.connect("/tmp/users.db")
+    c = conn.cursor()
+
+    c.execute("INSERT INTO likes(post_id) VALUES(?)", (post_id,))
+    conn.commit()
+    conn.close()
+
+    return redirect("/home")
+
+# COMMENT
+@app.route("/comment/<int:post_id>", methods=["POST"])
+def comment(post_id):
+    content = request.form["content"]
+
+    conn = sqlite3.connect("/tmp/users.db")
+    c = conn.cursor()
+
+    c.execute("INSERT INTO comments(post_id,username,content) VALUES(?,?,?)",
+              (post_id, session["user"], content))
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/home")
+
 # DELETE
 @app.route("/delete/<int:id>")
 def delete(id):
@@ -169,7 +178,7 @@ def delete(id):
     post = c.fetchone()
 
     if post and post[0] == session["user"]:
-        if os.path.exists(post[1]):
+        if post[1] and os.path.exists(post[1]):
             os.remove(post[1])
 
         c.execute("DELETE FROM posts WHERE id=?", (id,))
@@ -185,6 +194,5 @@ def logout():
     return redirect("/")
 
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
