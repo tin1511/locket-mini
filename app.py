@@ -73,7 +73,7 @@ def comment(post_id):
 @app.route("/register", methods=["GET","POST"])
 def register():
     if request.method=="POST":
-        u=request.form["username"]
+        u = request.form.get("username")
         p=request.form["password"]
 
         conn=sqlite3.connect("db.sqlite")
