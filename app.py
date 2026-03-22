@@ -92,7 +92,7 @@ def login():
         u = request.form["username"]
         p = request.form["password"]
 
-        conn = sqlite3.connect("users.db")
+        conn = sqlite3.connect("/tmp/users.db")
         c = conn.cursor()
         c.execute("SELECT * FROM users WHERE username=? AND password=?", (u,p))
         user = c.fetchone()
@@ -107,7 +107,7 @@ def login():
 # HOME
 @app.route("/home")
 def home():
-    conn = sqlite3.connect("users.db")
+    conn = sqlite3.connect("/tmp/users.db")
     c = conn.cursor()
 
     c.execute("SELECT * FROM posts ORDER BY id DESC")
@@ -133,7 +133,7 @@ def post():
     path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     file.save(path)
 
-    conn = sqlite3.connect("users.db")
+    conn = sqlite3.connect("/tmp/users.db")
     c = conn.cursor()
     c.execute("INSERT INTO posts(username,image,caption) VALUES(?,?,?)",
               (session["user"], path, caption))
@@ -145,7 +145,7 @@ def post():
 # DELETE
 @app.route("/delete/<int:id>")
 def delete(id):
-    conn = sqlite3.connect("users.db")
+    conn = sqlite3.connect("/tmp/users.db")
     c = conn.cursor()
 
     c.execute("SELECT username,image FROM posts WHERE id=?", (id,))
