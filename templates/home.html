@@ -73,8 +73,11 @@ body{
 {% for p in posts %}
 <div class="post">
     <b>{{p[1]}}</b>
-    <p>{{p[3]}}</p>
+    <p style="white-space: pre-line;">{{p[3]}}</p>
+
+     {% if p[2] %}
     <img src="/{{p[2]}}">
+     {% endif %}
 
     <div class="actions">
         <a href="/like/{{p[0]}}">👍 Like</a>
