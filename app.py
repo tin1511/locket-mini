@@ -11,9 +11,17 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # DB
 def init_db():
-    conn = sqlite3.connect("users.db")
+    conn = sqlite3.connect("/tmp/users.db")
     c = conn.cursor()
 
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS users(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
+        password TEXT
+    )
+    """)
+    
     c.execute("""
     CREATE TABLE IF NOT EXISTS likes(
     id INTEGER PRIMARY KEY,
@@ -37,7 +45,7 @@ init_db()
 
 @app.route("/like/<int:post_id>")
 def like(post_id):
-    conn = sqlite3.connect("users.db")
+    conn = sqlite3.connect("/tmp/users.db")
     c = conn.cursor()
 
     c.execute("INSERT INTO likes(post_id) VALUES(?)", (post_id,))
@@ -50,7 +58,7 @@ def like(post_id):
 def comment(post_id):
     content = request.form["content"]
 
-    conn = sqlite3.connect("users.db")
+    conn = sqlite3.connect("/tmp/users.db")
     c = conn.cursor()
 
     c.execute("INSERT INTO comments(post_id,username,content) VALUES(?,?,?)",
@@ -64,16 +72,15 @@ def comment(post_id):
 # REGISTER
 @app.route("/register", methods=["GET","POST"])
 def register():
-    if request.method == "POST":
-        u = request.form["username"]
-        p = request.form["password"]
+    if request.method=="POST":
+        u=request.form["username"]
+        p=request.form["password"]
 
-        sqlite3.connect("/tmp/users.db")
-        c = conn.cursor()
+        conn=sqlite3.connect("db.sqlite")
+        c=conn.cursor()
         c.execute("INSERT INTO users(username,password) VALUES(?,?)",(u,p))
         conn.commit()
         conn.close()
-
         return redirect("/")
 
     return render_template("register.html")
