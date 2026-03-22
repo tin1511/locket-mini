@@ -74,7 +74,7 @@ def comment(post_id):
 def register():
     if request.method=="POST":
         u = request.form.get("username")
-        p=request.form["password"]
+        p = request.form.get("password")
 
         conn=sqlite3.connect("db.sqlite")
         c=conn.cursor()
