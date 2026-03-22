@@ -1,40 +1,137 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, redirect, session, jsonify
+import sqlite3
 import os
 from datetime import datetime
 
 app = Flask(__name__)
+app.secret_key = "secret123"
 
 UPLOAD_FOLDER = "static"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
+# DB
+def init_db():
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
 
-photos = []
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS users(
+        id INTEGER PRIMARY KEY,
+        username TEXT,
+        password TEXT
+    )
+    """)
 
-@app.route("/")
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS posts(
+        id INTEGER PRIMARY KEY,
+        username TEXT,
+        image TEXT,
+        caption TEXT
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+init_db()
+
+# REGISTER
+@app.route("/register", methods=["GET","POST"])
+def register():
+    if request.method == "POST":
+        u = request.form["username"]
+        p = request.form["password"]
+
+        conn = sqlite3.connect("users.db")
+        c = conn.cursor()
+        c.execute("INSERT INTO users(username,password) VALUES(?,?)",(u,p))
+        conn.commit()
+        conn.close()
+
+        return redirect("/")
+
+    return render_template("register.html")
+
+# LOGIN
+@app.route("/", methods=["GET","POST"])
+def login():
+    if request.method == "POST":
+        u = request.form["username"]
+        p = request.form["password"]
+
+        conn = sqlite3.connect("users.db")
+        c = conn.cursor()
+        c.execute("SELECT * FROM users WHERE username=? AND password=?", (u,p))
+        user = c.fetchone()
+        conn.close()
+
+        if user:
+            session["user"] = u
+            return redirect("/home")
+
+    return render_template("login.html")
+
+# HOME
+@app.route("/home")
 def home():
-    return render_template("index.html")
+    if "user" not in session:
+        return redirect("/")
 
-@app.route("/upload", methods=["POST"])
-def upload():
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+    c.execute("SELECT * FROM posts ORDER BY id DESC")
+    posts = c.fetchall()
+    conn.close()
+
+    return render_template("home.html", posts=posts, user=session["user"])
+
+# UPLOAD POST
+@app.route("/post", methods=["POST"])
+def post():
+    if "user" not in session:
+        return "no"
+
     file = request.files["photo"]
+    caption = request.form["caption"]
 
     filename = datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg"
     path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-
     file.save(path)
 
-    url = "/" + path
-    photos.insert(0, url)
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+    c.execute("INSERT INTO posts(username,image,caption) VALUES(?,?,?)",
+              (session["user"], path, caption))
+    conn.commit()
+    conn.close()
 
-    return jsonify({"url": url})
+    return redirect("/home")
 
-@app.route("/photos")
-def get_photos():
-    return jsonify(photos)
+# DELETE
+@app.route("/delete/<int:id>")
+def delete(id):
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
 
-# 🔥 FIX RENDER PORT
+    c.execute("SELECT username,image FROM posts WHERE id=?", (id,))
+    post = c.fetchone()
+
+    if post and post[0] == session["user"]:
+        if os.path.exists(post[1]):
+            os.remove(post[1])
+
+        c.execute("DELETE FROM posts WHERE id=?", (id,))
+        conn.commit()
+
+    conn.close()
+    return redirect("/home")
+
+# LOGOUT
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
+
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=True)
