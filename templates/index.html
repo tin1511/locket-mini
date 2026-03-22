@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Locket Mini</title>
+
+<style>
+body{
+    background:black;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    font-family:sans-serif;
+}
+
+.box{
+    width:260px;
+    background:#111;
+    padding:15px;
+    border-radius:20px;
+    text-align:center;
+}
+
+#camera{
+    height:320px;
+    background:#222;
+    border-radius:15px;
+    margin-bottom:10px;
+    overflow:auto;
+}
+
+#camera img{
+    width:100%;
+    border-radius:10px;
+    margin-bottom:8px;
+}
+
+button{
+    padding:10px;
+    border:none;
+    border-radius:20px;
+    margin:5px;
+    cursor:pointer;
+}
+
+.post{
+    background:#007bff;
+    color:white;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+    <h3 style="color:white;">Locket Mini 📸</h3>
+
+    <div id="camera">Chưa có ảnh</div>
+
+    <input type="file" id="file" hidden>
+
+    <button onclick="pick()">📷</button>
+    <button class="post" onclick="upload()">POST</button>
+</div>
+
+<script>
+let fileData = null;
+
+function pick(){
+    document.getElementById("file").click();
+}
+
+document.getElementById("file").onchange = e => {
+    fileData = e.target.files[0];
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        document.getElementById("camera").innerHTML =
+            `<img src="${reader.result}">`;
+    }
+    reader.readAsDataURL(fileData);
+};
+
+async function upload(){
+    if(!fileData) return alert("Chọn ảnh trước!");
+
+    const formData = new FormData();
+    formData.append("photo", fileData);
+
+    await fetch("/upload", {
+        method:"POST",
+        body:formData
+    });
+
+    loadPhotos();
+}
+
+async function loadPhotos(){
+    const res = await fetch("/photos");
+    const data = await res.json();
+
+    const cam = document.getElementById("camera");
+    cam.innerHTML = "";
+
+    data.forEach(img=>{
+        cam.innerHTML += `<img src="${img}">`;
+    });
+}
+
+loadPhotos();
+</script>
+
+</body>
+</html>
