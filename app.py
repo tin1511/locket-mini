@@ -116,6 +116,9 @@ def login():
 # HOME
 @app.route("/home")
 def home():
+    if "user" not in session:
+        return redirect("/")
+
     conn = sqlite3.connect("/tmp/users.db")
     c = conn.cursor()
 
