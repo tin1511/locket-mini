@@ -7,11 +7,9 @@ app = Flask(__name__)
 UPLOAD_FOLDER = "static"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-# đảm bảo folder tồn tại
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-# lưu danh sách ảnh (RAM)
 photos = []
 
 @app.route("/")
@@ -36,6 +34,7 @@ def upload():
 def get_photos():
     return jsonify(photos)
 
+# FIX PORT CHO RENDER
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
