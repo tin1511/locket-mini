@@ -9,92 +9,86 @@ body{
     font-family:sans-serif;
 }
 
-/* HEADER */
 .header{
     background:white;
-    padding:10px;
-    font-size:20px;
-    font-weight:bold;
+    padding:12px;
     text-align:center;
+    font-weight:bold;
     box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
-/* POST BOX */
-.post-box{
+.post-box, .post{
     background:white;
+    width:400px;
     margin:20px auto;
     padding:15px;
-    width:400px;
     border-radius:10px;
 }
 
-.post-box input, .post-box button{
+textarea{
     width:100%;
+    height:60px;
+}
+
+img{
+    width:100%;
+    border-radius:10px;
     margin-top:10px;
 }
 
-/* FEED */
-.post{
-    background:white;
-    width:400px;
-    margin:20px auto;
-    padding:10px;
-    border-radius:10px;
-}
-
-.post img{
-    width:100%;
-    border-radius:10px;
-}
-
-.actions{
-    margin-top:10px;
+.actions a{
+    margin-right:10px;
+    text-decoration:none;
 }
 
 .comment{
     font-size:14px;
-    margin-top:5px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">Mini Facebook 😎</div>
+<div class="header">
+    Mini Facebook 😎 | {{user}}
+    <a href="/logout">Logout</a>
+</div>
 
 <div class="post-box">
 <form method="POST" action="/post" enctype="multipart/form-data">
-<input type="file" name="photo">
-<input name="caption" placeholder="Bạn đang nghĩ gì?">
-<button>Đăng</button>
+    <textarea name="caption" placeholder="Bạn đang nghĩ gì?"></textarea>
+    <input type="file" name="photo">
+    <button>Đăng</button>
 </form>
 </div>
 
 {% for p in posts %}
 <div class="post">
     <b>{{p[1]}}</b>
+
     <p style="white-space: pre-line;">{{p[3]}}</p>
 
-     {% if p[2] %}
-    <img src="/{{p[2]}}">
-     {% endif %}
+    {% if p[2] %}
+        <img src="/{{p[2]}}">
+    {% endif %}
 
     <div class="actions">
-        <a href="/like/{{p[0]}}">👍 Like</a>
+        <a href="/like/{{p[0]}}">👍 {{likes.get(p[0],0)}}</a>
+
+        {% if p[1] == user %}
+            <a href="/delete/{{p[0]}}">🗑 Xoá</a>
+        {% endif %}
     </div>
 
-    <!-- COMMENT -->
     <form method="POST" action="/comment/{{p[0]}}">
         <input name="content" placeholder="Viết bình luận...">
     </form>
 
-    <!-- HIỆN COMMENT -->
     {% for c in comments if c[1] == p[0] %}
         <div class="comment">
             <b>{{c[2]}}:</b> {{c[3]}}
         </div>
     {% endfor %}
-
 </div>
 {% endfor %}
 
