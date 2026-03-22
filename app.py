@@ -15,6 +15,15 @@ def init_db():
     c = conn.cursor()
 
     c.execute("""
+    CREATE TABLE IF NOT EXISTS posts(
+       id INTEGER PRIMARY KEY AUTOINCREMENT,
+       username TEXT,
+       image TEXT,
+       caption TEXT
+    )
+    """)
+
+    c.execute("""
     CREATE TABLE IF NOT EXISTS users(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT,
@@ -24,17 +33,17 @@ def init_db():
     
     c.execute("""
     CREATE TABLE IF NOT EXISTS likes(
-    id INTEGER PRIMARY KEY,
-    post_id INTEGER
+        id INTEGER PRIMARY KEY,
+        post_id INTEGER
     )
    """)
 
     c.execute("""
     CREATE TABLE IF NOT EXISTS comments(
-    id INTEGER PRIMARY KEY,
-    post_id INTEGER,
-    username TEXT,
-    content TEXT
+        id INTEGER PRIMARY KEY,
+        post_id INTEGER,
+        username TEXT,
+        content TEXT
     )
     """)
 
