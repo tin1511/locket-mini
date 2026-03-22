@@ -35,6 +35,32 @@ def init_db():
 
 init_db()
 
+@app.route("/like/<int:post_id>")
+def like(post_id):
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+
+    c.execute("INSERT INTO likes(post_id) VALUES(?)", (post_id,))
+    conn.commit()
+    conn.close()
+
+    return redirect("/home")
+
+@app.route("/comment/<int:post_id>", methods=["POST"])
+def comment(post_id):
+    content = request.form["content"]
+
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+
+    c.execute("INSERT INTO comments(post_id,username,content) VALUES(?,?,?)",
+              (post_id, session["user"], content))
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/home")
+
 # REGISTER
 @app.route("/register", methods=["GET","POST"])
 def register():
