@@ -1,188 +1,23 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Locket Mini</title>
+<h2>Xin chào {{user}}</h2>
+<a href="/logout">Logout</a>
 
-<link rel="manifest" href="/static/manifest.json">
+<form method="POST" action="/post" enctype="multipart/form-data">
+<input type="file" name="photo">
+<input name="caption" placeholder="Viết gì đó...">
+<button>Post</button>
+</form>
 
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
+<hr>
 
-body{
-    background:black;
-    color:white;
-    font-family:sans-serif;
-}
+{% for p in posts %}
+<div>
+    <h3>{{p[1]}}</h3>
+    <img src="/{{p[2]}}" width="300">
+    <p>{{p[3]}}</p>
 
-.app{
-    max-width:420px;
-    margin:auto;
-    height:100vh;
-    display:flex;
-    flex-direction:column;
-}
-
-.header{
-    text-align:center;
-    padding:10px;
-    font-weight:bold;
-}
-
-/* FEED */
-#feed{
-    flex:1;
-    overflow-y:scroll;
-    scroll-snap-type: y mandatory;
-}
-
-.photo{
-    height:100vh;
-    scroll-snap-align:start;
-}
-
-.photo img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-}
-
-/* BUTTONS */
-.controls{
-    position:fixed;
-    bottom:20px;
-    width:100%;
-    display:flex;
-    justify-content:center;
-    gap:20px;
-}
-
-.camera-btn{
-    width:70px;
-    height:70px;
-    border-radius:50%;
-    background:white;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:24px;
-}
-
-.post-btn{
-    padding:10px 20px;
-    border-radius:20px;
-    border:none;
-    background:#007bff;
-    color:white;
-}
-</style>
-</head>
-
-<body>
-
-<div class="app">
-    <div class="header">Locket Mini 📸</div>
-
-    <div id="feed"></div>
-
-    <div class="controls">
-        <div class="camera-btn" onclick="capture()">📷</div>
-        <button class="post-btn" onclick="upload()">POST</button>
-    </div>
+    {% if p[1] == user %}
+    <a href="/delete/{{p[0]}}">❌ Xoá</a>
+    {% endif %}
 </div>
-
-<script>
-let video = null;
-let canvas = document.createElement("canvas");
-let capturedBlob = null;
-
-/* LOAD FEED */
-async function loadFeed(){
-    const res = await fetch("/photos");
-    const data = await res.json();
-
-    const feed = document.getElementById("feed");
-    feed.innerHTML = "";
-
-    if(data.length === 0){
-        feed.innerHTML = "<p style='text-align:center;margin-top:50px'>Chưa có ảnh 😢</p>";
-        return;
-    }
-
-    data.forEach(img=>{
-        feed.innerHTML += `
-            <div class="photo">
-                <img src="${img}">
-            </div>
-        `;
-    });
-}
-
-/* CAMERA */
-async function startCamera(){
-    video = document.createElement("video");
-
-    const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user" }
-    });
-
-    video.srcObject = stream;
-    video.autoplay = true;
-
-    const feed = document.getElementById("feed");
-    feed.innerHTML = "";
-    feed.appendChild(video);
-}
-
-/* CAPTURE */
-function capture(){
-    if(!video){
-        startCamera();
-        return;
-    }
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0);
-
-    canvas.toBlob(blob=>{
-        capturedBlob = blob;
-
-        const url = URL.createObjectURL(blob);
-
-        document.getElementById("feed").innerHTML =
-            `<div class="photo"><img src="${url}"></div>`;
-
-        video = null; // 🔥 FIX
-    }, "image/jpeg");
-}
-
-/* UPLOAD */
-async function upload(){
-    if(!capturedBlob){
-        alert("Chụp ảnh trước!");
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append("photo", capturedBlob, "photo.jpg");
-
-    await fetch("/upload", {
-        method:"POST",
-        body:formData
-    });
-
-    capturedBlob = null;
-
-    await loadFeed(); // 🔥 FIX QUAN TRỌNG
-}
-
-/* LOAD LẦN ĐẦU */
-loadFeed();
-</script>
-
-</body>
-</html>
+<hr>
+{% endfor %}
