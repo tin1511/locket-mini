@@ -100,16 +100,18 @@ def login():
 # HOME
 @app.route("/home")
 def home():
-    if "user" not in session:
-        return redirect("/")
-
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
+
     c.execute("SELECT * FROM posts ORDER BY id DESC")
     posts = c.fetchall()
+
+    c.execute("SELECT * FROM comments")
+    comments = c.fetchall()
+
     conn.close()
 
-    return render_template("home.html", posts=posts, user=session["user"])
+    return render_template("home.html", posts=posts, comments=comments, user=session["user"])
 
 # UPLOAD POST
 @app.route("/post", methods=["POST"])
