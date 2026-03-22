@@ -136,19 +136,24 @@ def home():
 @app.route("/post", methods=["POST"])
 def post():
     if "user" not in session:
-        return "no"
+        return redirect("/")
 
-    file = request.files["photo"]
-    caption = request.form["caption"]
+    caption = request.form.get("caption")
+    file = request.files.get("photo")
 
-    filename = datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg"
-    path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    file.save(path)
+    path = ""
+
+    if file and file.filename != "":
+        filename = datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg"
+        path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        file.save(path)
 
     conn = sqlite3.connect("/tmp/users.db")
     c = conn.cursor()
+
     c.execute("INSERT INTO posts(username,image,caption) VALUES(?,?,?)",
               (session["user"], path, caption))
+
     conn.commit()
     conn.close()
 
