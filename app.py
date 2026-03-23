@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = "secret123"
+app.secret_key = "super_secret_key_123456"
 
 UPLOAD_FOLDER = "static"
 UPLOAD_FOLDER = "/tmp"
@@ -52,6 +52,10 @@ def init_db():
     conn.close()
 
 init_db()
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory('/tmp', filename)
 
 # REGISTER
 @app.route("/register", methods=["GET","POST"])
@@ -128,8 +132,8 @@ def post():
     if file and file.filename != "":
         try:
             filename = datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg"
-            path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-            file.save(path)
+            path = filename  # CHỈ LƯU TÊN FILE
+            file.save(os.path.join("/tmp", filename))
         except:
             path = ""
 
