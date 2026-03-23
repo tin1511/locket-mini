@@ -4,45 +4,123 @@
 <title>Mini Facebook</title>
 
 <style>
-body{
-    background:#f0f2f5;
-    font-family:sans-serif;
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
+body{
+    background:#18191a;
+    font-family:Segoe UI, sans-serif;
+    color:#e4e6eb;
+}
+
+/* HEADER */
 .header{
-    background:white;
+    position:sticky;
+    top:0;
+    background:#242526;
     padding:12px;
     text-align:center;
+    font-size:18px;
     font-weight:bold;
-    box-shadow:0 2px 5px rgba(0,0,0,0.1);
+    border-bottom:1px solid #3a3b3c;
 }
 
-.post-box, .post{
-    background:white;
-    width:400px;
+/* CONTAINER */
+.container{
+    max-width:500px;
     margin:20px auto;
+}
+
+/* POST BOX */
+.post-box{
+    background:#242526;
     padding:15px;
-    border-radius:10px;
+    border-radius:12px;
+    margin-bottom:20px;
 }
 
 textarea{
     width:100%;
-    height:60px;
+    height:70px;
+    background:#3a3b3c;
+    border:none;
+    border-radius:8px;
+    padding:10px;
+    color:white;
+    resize:none;
 }
 
-img{
+input[type="file"]{
+    margin-top:10px;
+    color:#b0b3b8;
+}
+
+button{
+    width:100%;
+    margin-top:10px;
+    padding:8px;
+    background:#2374e1;
+    border:none;
+    border-radius:8px;
+    color:white;
+    cursor:pointer;
+}
+
+/* POST */
+.post{
+    background:#242526;
+    border-radius:12px;
+    padding:15px;
+    margin-bottom:15px;
+}
+
+.username{
+    font-weight:bold;
+    margin-bottom:5px;
+}
+
+.caption{
+    margin:10px 0;
+    white-space: pre-line;
+}
+
+.post img{
     width:100%;
     border-radius:10px;
     margin-top:10px;
 }
 
+/* ACTIONS */
+.actions{
+    display:flex;
+    justify-content:space-between;
+    margin-top:10px;
+}
+
 .actions a{
-    margin-right:10px;
     text-decoration:none;
+    color:#b0b3b8;
+    font-size:14px;
+}
+
+/* COMMENT */
+.comment-box input{
+    width:100%;
+    margin-top:10px;
+    padding:6px;
+    border-radius:8px;
+    border:none;
+    background:#3a3b3c;
+    color:white;
 }
 
 .comment{
-    font-size:14px;
+    font-size:13px;
+    margin-top:5px;
+    color:#b0b3b8;
 }
 </style>
 </head>
@@ -50,10 +128,13 @@ img{
 <body>
 
 <div class="header">
-    Mini Facebook 😎 | {{user}}
-    <a href="/logout">Logout</a>
+    Mini Facebook 😎 | {{user}} |
+    <a href="/logout" style="color:#2374e1;">Logout</a>
 </div>
 
+<div class="container">
+
+<!-- POST BOX -->
 <div class="post-box">
 <form method="POST" action="/post" enctype="multipart/form-data">
     <textarea name="caption" placeholder="Bạn đang nghĩ gì?"></textarea>
@@ -62,11 +143,13 @@ img{
 </form>
 </div>
 
+<!-- FEED -->
 {% for p in posts %}
 <div class="post">
-    <b>{{p[1]}}</b>
 
-    <p style="white-space: pre-line;">{{p[3]}}</p>
+    <div class="username">{{p[1]}}</div>
+
+    <div class="caption">{{p[3]}}</div>
 
     {% if p[2] %}
         <img src="/{{p[2]}}">
@@ -80,17 +163,22 @@ img{
         {% endif %}
     </div>
 
-    <form method="POST" action="/comment/{{p[0]}}">
-        <input name="content" placeholder="Viết bình luận...">
-    </form>
+    <div class="comment-box">
+        <form method="POST" action="/comment/{{p[0]}}">
+            <input name="content" placeholder="Viết bình luận...">
+        </form>
+    </div>
 
     {% for c in comments if c[1] == p[0] %}
         <div class="comment">
-            <b>{{c[2]}}:</b> {{c[3]}}
+            <b>{{c[2]}}</b>: {{c[3]}}
         </div>
     {% endfor %}
+
 </div>
 {% endfor %}
+
+</div>
 
 </body>
 </html>
