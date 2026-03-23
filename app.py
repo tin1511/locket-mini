@@ -7,6 +7,7 @@ app = Flask(__name__)
 app.secret_key = "secret123"
 
 UPLOAD_FOLDER = "static"
+UPLOAD_FOLDER = "/tmp"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # INIT DB
