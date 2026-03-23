@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, send_from_directory
 import sqlite3
 import os
 from datetime import datetime
@@ -6,11 +6,13 @@ from datetime import datetime
 app = Flask(__name__)
 app.secret_key = "super_secret_key_123456"
 
-UPLOAD_FOLDER = "static"
+# 📁 thư mục lưu ảnh
 UPLOAD_FOLDER = "/tmp"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-# INIT DB
+os.makedirs("/tmp", exist_ok=True)
+
+# DB INIT
 def init_db():
     conn = sqlite3.connect("/tmp/users.db")
     c = conn.cursor()
@@ -53,6 +55,7 @@ def init_db():
 
 init_db()
 
+# 📸 ROUTE HIỂN THỊ ẢNH
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory('/tmp', filename)
@@ -88,6 +91,7 @@ def login():
 
         if user:
             session["user"] = u
+            session.permanent = True
             return redirect("/home")
 
     return render_template("login.html")
@@ -118,7 +122,7 @@ def home():
                            likes=likes_data,
                            user=session["user"])
 
-# POST
+# POST (FIX ẢNH)
 @app.route("/post", methods=["POST"])
 def post():
     if "user" not in session:
@@ -127,21 +131,17 @@ def post():
     caption = request.form.get("caption")
     file = request.files.get("photo")
 
-    path = ""
+    filename = ""
 
     if file and file.filename != "":
-        try:
-            filename = datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg"
-            path = filename  # CHỈ LƯU TÊN FILE
-            file.save(os.path.join("/tmp", filename))
-        except:
-            path = ""
+        filename = datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg"
+        file.save(os.path.join("/tmp", filename))
 
     conn = sqlite3.connect("/tmp/users.db")
     c = conn.cursor()
 
     c.execute("INSERT INTO posts(username,image,caption) VALUES(?,?,?)",
-              (session["user"], path, caption))
+              (session["user"], filename, caption))
 
     conn.commit()
     conn.close()
@@ -186,8 +186,10 @@ def delete(id):
     post = c.fetchone()
 
     if post and post[0] == session["user"]:
-        if post[1] and os.path.exists(post[1]):
-            os.remove(post[1])
+        if post[1]:
+            path = os.path.join("/tmp", post[1])
+            if os.path.exists(path):
+                os.remove(path)
 
         c.execute("DELETE FROM posts WHERE id=?", (id,))
         conn.commit()
