@@ -126,9 +126,12 @@ def post():
     path = ""
 
     if file and file.filename != "":
-        filename = datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg"
-        path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-        file.save(path)
+        try:
+            filename = datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg"
+            path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            file.save(path)
+        except:
+            path = ""
 
     conn = sqlite3.connect("/tmp/users.db")
     c = conn.cursor()
